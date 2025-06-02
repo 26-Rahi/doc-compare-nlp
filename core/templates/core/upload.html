@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compare Documents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .high-similarity {
+            color: green;
+        }
+        .low-similarity {
+            color: orange;
+        }
+        .missing {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload Documents to Compare</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="documents" multiple required>
+        <button type="submit">Compare</button>
+    </form>
+
+    {% if results %}
+        <h2>Comparison Results</h2>
+        {% for section, data in results.items %}
+            <h3>{{ section }}</h3>
+            <ul>
+                <li><strong>Document 1 Summary:</strong> {{ data.texts.0|default:"❌ Missing" }}</li>
+                <li><strong>Document 2 Summary:</strong> {{ data.texts.1|default:"❌ Missing" }}</li>
+
+                {% if data.similarity %}
+                    <li>
+                        <strong>Similarity:</strong>
+                        <span class="{% if data.similarity.0 >= 0.85 %}high-similarity{% elif data.similarity.0 >= 0.5 %}low-similarity{% else %}missing{% endif %}">
+                            {{ data.similarity.0|floatformat:2 }}
+                        </span>
+                    </li>
+                {% else %}
+                    <li class="missing"><strong>Similarity:</strong> ❌ Not available</li>
+                {% endif %}
+
+                {% if data.texts.0 == "" %}
+                    <li class="missing">❗ Section missing in Document 1</li>
+                {% endif %}
+                {% if data.texts.1 == "" %}
+                    <li class="missing">❗ Section missing in Document 2</li>
+                {% endif %}
+            </ul>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
